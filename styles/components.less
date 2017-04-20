@@ -1,6 +1,8 @@
 /* BEGIN DIALOG */
 .dialog {
 
+  @content-padding: 0.5em;
+
     position: fixed;
     left: 0;
     top: 0;
@@ -20,7 +22,7 @@
         width: 980px;
     }
 
-    .dialog__content {
+    &__content {
       height: 300px;
       width: 300px;
       background: white;
@@ -30,6 +32,21 @@
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 200;
+
+      &__commands {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: @content-padding;
+        border-top: 1px solid gray;
+
+        & > * {
+          display: inline-block;
+          float: right;
+          margin-left: @content-padding;
+        }
+      }
     }
 }
 

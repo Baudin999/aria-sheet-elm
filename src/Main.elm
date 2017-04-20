@@ -1,15 +1,15 @@
-module Main exposing (..)
+module Main exposing (main)
 
 import Html exposing (Html)
-import Models exposing (..)
-import Components exposing (..)
+import Models
+import Components exposing (root)
 import Handlers exposing (update, init)
 
 
-main : Program Never PageModel Actions
+main : Program Never Models.PageModel Models.Actions
 main =
     Html.program
-        { view = Components.pageContainer
+        { view = root
         , init = init
         , update = update
         , subscriptions = \_ -> Sub.none

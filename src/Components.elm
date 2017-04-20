@@ -12,8 +12,8 @@ import Models exposing (..)
 {- This is the initial container of the pages and should be seen as the root of the application. -}
 
 
-pageContainer : PageModel -> Html Actions
-pageContainer props =
+root : PageModel -> Html Actions
+root props =
     div []
         [ dialog props.appState props.character
         , div [ class "page-container" ]
@@ -28,6 +28,8 @@ pageContainer props =
 {- A simple dialog -}
 
 
+{-| This is a Dialog
+-}
 dialog : ApplicationStateModel -> CharacterModel -> Html Actions
 dialog appState character =
     let
@@ -116,9 +118,8 @@ renderFeat feat allowEditFeat character =
                 []
     in
         div ([ class "row feat-row" ] ++ events)
-            [ span [] [ skillCircle Models.Class ]
-            , span [] [ skillCircle Models.Race ]
-            , span [] [ skillCircle Models.Xp ]
+            [ span [] [ skillCircle (List.head feat.sources) ]
+            , span [] [ skillCircle (Just { source = Race, key = "race" }) ]
             , span [] [ text feat.name ]
             , span [ class "sticky" ] [ text feat.prefix ]
             , span [ class "sticky" ] [ text (toString feat.total) ]
@@ -126,23 +127,28 @@ renderFeat feat allowEditFeat character =
             ]
 
 
-skillCircle : BoughtFrom -> Html Actions
-skillCircle boughtFrom =
-    let
-        createClassFromBoughtSource boughtFrom =
-            case boughtFrom of
-                Xp ->
-                    "xp"
+skillCircle : Maybe SourceModel -> Html Actions
+skillCircle maybeSource =
+    case maybeSource of
+        Just source ->
+            let
+                createClassFromBoughtSource boughtFrom =
+                    case boughtFrom of
+                        Xp ->
+                            "xp"
 
-                Race ->
-                    "race"
+                        Race ->
+                            "race"
 
-                Class ->
-                    "class"
+                        Class ->
+                            "class"
 
-                _ ->
-                    ""
-    in
-        svg [ width "12", height "12" ]
-            [ circle [ Svg.Attributes.class (createClassFromBoughtSource boughtFrom), cx "6", cy "6", r "5" ] []
-            ]
+                        _ ->
+                            ""
+            in
+                svg [ width "12", height "12" ]
+                    [ circle [ Svg.Attributes.class (createClassFromBoughtSource source.source), cx "6", cy "6", r "5" ] []
+                    ]
+
+        _ ->
+            text ""

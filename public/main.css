@@ -163,7 +163,7 @@ html {
 .dialog.large {
   width: 980px;
 }
-.dialog .dialog__content {
+.dialog__content {
   height: 300px;
   width: 300px;
   background: white;
@@ -173,6 +173,19 @@ html {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 200;
+}
+.dialog__content__commands {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5em;
+  border-top: 1px solid gray;
+}
+.dialog__content__commands > * {
+  display: inline-block;
+  float: right;
+  margin-left: 0.5em;
 }
 /* END DIALOG */
 /* BEGIN ROW */

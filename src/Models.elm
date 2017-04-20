@@ -39,9 +39,7 @@ type alias SourceModel =
 
 
 type alias Buyable a =
-    { a
-        | sources : List SourceModel
-    }
+    { a | sources : List SourceModel }
 
 
 type alias Nameble a =
@@ -78,10 +76,12 @@ type alias CharacterStatisticModel =
 type alias CharacterFeatModel =
     Nameble
         (Calculatable
-            { factor : Float
-            , prefix : String
-            , unit : String
-            }
+            (Buyable
+                { factor : Float
+                , prefix : String
+                , unit : String
+                }
+            )
         )
 
 
@@ -199,4 +199,12 @@ defaultCharacterFeat name description factor prefix unit =
     , factor = factor
     , prefix = prefix
     , unit = unit
+    , sources =
+        [ { source = None
+          , key = ""
+          }
+        , { source = None
+          , key = ""
+          }
+        ]
     }
