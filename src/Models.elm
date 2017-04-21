@@ -41,7 +41,7 @@ type alias SourceModel =
 
 
 type alias Buyable a =
-    { a | sources : List SourceModel }
+    { a | bought : SourceModel, expertise : SourceModel }
 
 
 type alias Nameble a =
@@ -88,14 +88,15 @@ type alias CharacterFeatModel =
 
 
 type alias CharacterProfessionModel =
-    Buyable
-        { name : String
-        }
+    { bought : SourceModel
+    , expertise : SourceModel
+    , name : String
+    }
 
 
 type alias CharacterResistanceModel =
-    { bought : Bool
-    , expertise : Bool
+    { bought : SourceModel
+    , expertise : SourceModel
     , name : String
     }
 
@@ -157,14 +158,14 @@ defaultCharacter =
     , player = "New Player"
     , class = defaultClassModel
     , resistances =
-        [ CharacterResistanceModel False False "Fire & Heat"
-        , CharacterResistanceModel False False "Cold & Ice"
-        , CharacterResistanceModel False False "Holy"
-        , CharacterResistanceModel False False "Mental"
-        , CharacterResistanceModel False False "Magic"
-        , CharacterResistanceModel False False "Poison & Disease"
-        , CharacterResistanceModel False False "Strength"
-        , CharacterResistanceModel False False "Intelligence"
+        [ CharacterResistanceModel defaultSourceModel defaultSourceModel "Fire & Heat"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Cold & Ice"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Holy"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Mental"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Magic"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Poison & Disease"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Strength"
+        , CharacterResistanceModel defaultSourceModel defaultSourceModel "Intelligence"
         ]
     , feats =
         [ defaultCharacterFeat "Expertise" "How well you can perform the skill" 1 "" ""
@@ -192,15 +193,15 @@ defaultCharacter =
         , defaultCharacterFeat "Scholar" "+3 per rank on your scholar rolls" 3 "" "+"
         ]
     , professions =
-        [ { sources = defaultBuyable, name = "Craftsman" }
-        , { sources = defaultBuyable, name = "Miner" }
-        , { sources = defaultBuyable, name = "Medic" }
-        , { sources = defaultBuyable, name = "Stagehand" }
-        , { sources = defaultBuyable, name = "Merchant" }
-        , { sources = defaultBuyable, name = "Tinkerer" }
-        , { sources = defaultBuyable, name = "Farmer" }
-        , { sources = defaultBuyable, name = "Sailor" }
-        , { sources = defaultBuyable, name = "Lawyer" }
+        [ CharacterProfessionModel defaultSourceModel defaultSourceModel "Craftsman"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Miner"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Medic"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Stagehand"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Merchant"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Tinkerer"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Farmer"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Sailor"
+        , CharacterProfessionModel defaultSourceModel defaultSourceModel "Lawyer"
         ]
     , statistics =
         [ defaultCharacterStatistic "STR"
@@ -216,6 +217,11 @@ defaultClassModel =
     { name = "unknown"
     , feats = []
     }
+
+
+defaultSourceModel : SourceModel
+defaultSourceModel =
+    { source = None, key = "" }
 
 
 defaultCharacterStatistic : String -> CharacterStatisticModel
@@ -254,7 +260,8 @@ defaultCharacterFeat name description factor prefix unit =
     , factor = factor
     , prefix = prefix
     , unit = unit
-    , sources = defaultBuyable
+    , bought = defaultSourceModel
+    , expertise = defaultSourceModel
     }
 
 

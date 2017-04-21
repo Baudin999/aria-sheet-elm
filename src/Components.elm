@@ -118,8 +118,8 @@ renderFeat feat allowEditFeat character =
                 []
     in
         div ([ class "row feat-row" ] ++ events)
-            [ span [] [ skillCircle (List.head feat.sources) ]
-            , span [] [ skillCircle (atIndex feat.sources 2) ]
+            [ span [] [ skillCircle feat.bought ]
+            , span [] [ skillCircle feat.expertise ]
             , span [] [ text feat.name ]
             , span [ class "sticky" ] [ text feat.prefix ]
             , span [ class "sticky" ] [ text (toString feat.total) ]
@@ -127,31 +127,26 @@ renderFeat feat allowEditFeat character =
             ]
 
 
-skillCircle : Maybe SourceModel -> Html Actions
-skillCircle maybeSource =
-    case maybeSource of
-        Just source ->
-            let
-                createClassFromBoughtSource boughtFrom =
-                    case boughtFrom of
-                        Xp ->
-                            "xp"
+skillCircle : SourceModel -> Html Actions
+skillCircle sourceModel =
+    let
+        createClassFromBoughtSource boughtFrom =
+            case boughtFrom of
+                Xp ->
+                    "xp"
 
-                        Race ->
-                            "race"
+                Race ->
+                    "race"
 
-                        Class ->
-                            "class"
+                Class ->
+                    "class"
 
-                        _ ->
-                            ""
-            in
-                svg [ width "12", height "12" ]
-                    [ circle [ Svg.Attributes.class (createClassFromBoughtSource source.source), cx "6", cy "6", r "5" ] []
-                    ]
-
-        _ ->
-            text ""
+                _ ->
+                    ""
+    in
+        svg [ width "12", height "12" ]
+            [ circle [ Svg.Attributes.class (createClassFromBoughtSource sourceModel.source), cx "6", cy "6", r "5" ] []
+            ]
 
 
 
