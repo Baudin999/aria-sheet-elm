@@ -1,5 +1,6 @@
 
 
+
 # Why I wanted to learn Elm
 
 Back in the day I used to be a C# developer writing big Enterprise applications. Big enterprise applications seem to come with their own set of ideas and rules. I've done almost everything, from CQRS, Micro Services to "Just do it" applications. I've build applications with _good_ OOP designs and I've build applications using a more functional style but I've never found it interesting; it was always "more of the same".

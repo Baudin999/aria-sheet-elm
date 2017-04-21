@@ -119,7 +119,7 @@ renderFeat feat allowEditFeat character =
     in
         div ([ class "row feat-row" ] ++ events)
             [ span [] [ skillCircle (List.head feat.sources) ]
-            , span [] [ skillCircle (Just { source = Race, key = "race" }) ]
+            , span [] [ skillCircle (atIndex feat.sources 2) ]
             , span [] [ text feat.name ]
             , span [ class "sticky" ] [ text feat.prefix ]
             , span [ class "sticky" ] [ text (toString feat.total) ]
@@ -152,3 +152,17 @@ skillCircle maybeSource =
 
         _ ->
             text ""
+
+
+
+{- HELPERS -}
+
+
+last : List a -> Maybe a
+last =
+    List.foldl (Just >> always) Nothing
+
+
+atIndex : List a -> Int -> Maybe a
+atIndex lst i =
+    last (List.take i lst)

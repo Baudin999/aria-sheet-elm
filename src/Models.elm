@@ -21,6 +21,8 @@ type alias CharacterModel =
     { name : String
     , player : String
     , class : ClassModel
+    , professions : List CharacterProfessionModel
+    , resistances : List CharacterResistanceModel
     , feats : List CharacterFeatModel
     , statistics : List CharacterStatisticModel
     }
@@ -85,6 +87,19 @@ type alias CharacterFeatModel =
         )
 
 
+type alias CharacterProfessionModel =
+    Buyable
+        { name : String
+        }
+
+
+type alias CharacterResistanceModel =
+    { bought : Bool
+    , expertise : Bool
+    , name : String
+    }
+
+
 type alias FeatModel =
     ValueModel {}
 
@@ -141,11 +156,51 @@ defaultCharacter =
     { name = "New Character"
     , player = "New Player"
     , class = defaultClassModel
+    , resistances =
+        [ CharacterResistanceModel False False "Fire & Heat"
+        , CharacterResistanceModel False False "Cold & Ice"
+        , CharacterResistanceModel False False "Holy"
+        , CharacterResistanceModel False False "Mental"
+        , CharacterResistanceModel False False "Magic"
+        , CharacterResistanceModel False False "Poison & Disease"
+        , CharacterResistanceModel False False "Strength"
+        , CharacterResistanceModel False False "Intelligence"
+        ]
     , feats =
         [ defaultCharacterFeat "Expertise" "How well you can perform the skill" 1 "" ""
         , defaultCharacterFeat "WS Expertise" "How well you can use martial weapons" 2 "" ""
         , defaultCharacterFeat "BS Expertise" "How well you can use ranged weapons" 2 "" ""
-        , defaultCharacterFeat "Crit." "You chance at a critical strike" 2.5 "" "%"
+        , defaultCharacterFeat "Extra Attack" "Chance to gain an extra attack" 20 "" "%"
+        , defaultCharacterFeat "Crit" "You chance at a critical strike" 2.5 "" "%"
+        , defaultCharacterFeat "Crit DMG" "Increase your critical strike DMG by 1d4 per rank" 1 "" "d4"
+        , defaultCharacterFeat "DMG Adjstm." "Increase DMG with 1 per rank" 1 "+" ""
+        , defaultCharacterFeat "Toughness" "Increase your armor with 1 per rank" 1 "+" ""
+        , defaultCharacterFeat "Regenerate" "Regenerate +1 HP per recuperate" 1 "+" ""
+        , defaultCharacterFeat "Spec. Offense" "10% per rank to refund all AP of that attack" 10 "" "%"
+        , defaultCharacterFeat "Spec. Defense" "10% per rank to refund all AP of that defensive action" 10 "" "%"
+        , defaultCharacterFeat "Endurance" "+1 AP per recuperation" 1 "+" ""
+        , defaultCharacterFeat "Directed Strike" "You can call hit locations with increasing accuracy. See directed strike for more information" 1 "+" ""
+        , defaultCharacterFeat "Aura" "All magic does -1 DMG" 1 "-" ""
+        , defaultCharacterFeat "Spash" "You have 20% chance per rank to automatically hit another target for 50% of your DMG. This DMG can be dodged." 20 "" "%"
+        , defaultCharacterFeat "Roll modifier" "Per rank you get 1 point which you can use to modify your world die. These points are restored after you sleep." 1 "" ""
+        , defaultCharacterFeat "Break Armor" "On each successful hit reduce the target's armor with 1 per rank" 1 "" ""
+        , defaultCharacterFeat "Unbreakable" "20% chance per recuperate to regain all of your lost armor" 20 "" "%"
+        , defaultCharacterFeat "Movement" "Increase movement rate with 4ft per rank." 4 "" "ft"
+        , defaultCharacterFeat "Hit Points" "Increase HP rank rating by 1" 1 "" ""
+        , defaultCharacterFeat "Merchant" "+3 per rank on your merchant rolls" 3 "" "+"
+        , defaultCharacterFeat "Artist" "+3 per rank on your artist rolls" 3 "" "+"
+        , defaultCharacterFeat "Scholar" "+3 per rank on your scholar rolls" 3 "" "+"
+        ]
+    , professions =
+        [ { sources = defaultBuyable, name = "Craftsman" }
+        , { sources = defaultBuyable, name = "Miner" }
+        , { sources = defaultBuyable, name = "Medic" }
+        , { sources = defaultBuyable, name = "Stagehand" }
+        , { sources = defaultBuyable, name = "Merchant" }
+        , { sources = defaultBuyable, name = "Tinkerer" }
+        , { sources = defaultBuyable, name = "Farmer" }
+        , { sources = defaultBuyable, name = "Sailor" }
+        , { sources = defaultBuyable, name = "Lawyer" }
         ]
     , statistics =
         [ defaultCharacterStatistic "STR"
@@ -199,12 +254,15 @@ defaultCharacterFeat name description factor prefix unit =
     , factor = factor
     , prefix = prefix
     , unit = unit
-    , sources =
-        [ { source = None
-          , key = ""
-          }
-        , { source = None
-          , key = ""
-          }
-        ]
+    , sources = defaultBuyable
     }
+
+
+defaultBuyable =
+    [ { source = None
+      , key = ""
+      }
+    , { source = None
+      , key = ""
+      }
+    ]
