@@ -3,7 +3,6 @@
 
 # Distribution
 dist/
-output/
 
 # elm-package generated files
 elm-stuff
