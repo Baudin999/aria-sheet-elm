@@ -32,6 +32,22 @@
       left: 50%;
       transform: translate(-50%, -50%);
       z-index: 200;
+      overflow: hidden;
+
+      &__header {
+        background: purple;
+        color: white;
+        padding: 5px;
+      }
+
+      &__body {
+        overflow-y: auto;
+        position: absolute;
+        top: 21px;
+        left: 0;
+        right: 0;
+        bottom: 30px;
+      }
 
       &__commands {
         position: absolute;
@@ -88,3 +104,18 @@ svg {
 }
 
 /* END SVG STYLES */
+
+
+/* BEGIN CONTAINER STYLES */
+.container {
+  display: inline-block;
+  border: 1px solid gray;
+  padding: 3px;
+
+  &__title {
+    text-transform: uppercase;
+    width: 100%;
+    text-align: center;
+  }
+}
+/* END CONTAINER STYLES */

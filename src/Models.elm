@@ -1,14 +1,38 @@
 module Models exposing (..)
 
+import Dict exposing (Dict)
 import Html as Html exposing (div)
 
 
 type Actions
+    = CharacterMiscActions MiscActions
+    | CharacterFeatActions FeatActions
+    | ChangeName Name
+    | EditFeats
+    | DialogDone
+    | BuyFeatWithXP CharacterFeatModel String
+    | DoNothing
+
+
+type MiscActions
     = NewCharacter
     | SaveCharacter
-    | ShowDialog
-    | EditFeat CharacterFeatModel
-    | DoNothing
+    | CloseDialog
+
+
+type FeatActions
+    = BuyFeat CharacterFeatModel CalculatableField
+    | BuyFeatXP CharacterFeatModel CalculatableField
+    | UpdateFeat CharacterFeatModel
+
+
+type ApplicationPart
+    = ApplicationPartFeats
+    | ApplicationPartNone
+
+
+type alias Name =
+    String
 
 
 type alias PageModel =
@@ -25,12 +49,14 @@ type alias CharacterModel =
     , resistances : List CharacterResistanceModel
     , feats : List CharacterFeatModel
     , statistics : List CharacterStatisticModel
+    , skills : List CharacterSkillModel
+    , equipment : List CharacterEquipmentModel
     }
 
 
 type alias ClassModel =
     { name : String
-    , feats : List FeatModel
+    , feats : Dict String Int
     }
 
 
@@ -41,10 +67,13 @@ type alias SourceModel =
 
 
 type alias Buyable a =
-    { a | bought : SourceModel, expertise : SourceModel }
+    { a
+        | bought : SourceModel
+        , expertise : SourceModel
+    }
 
 
-type alias Nameble a =
+type alias Namable a =
     { a
         | name : String
         , title : String
@@ -57,6 +86,7 @@ type alias Calculatable a =
     { a
         | total : Float
         , base : Int
+        , xp : Int
         , race : Int
         , class : Int
         , bonus : Int
@@ -67,21 +97,40 @@ type alias Calculatable a =
     }
 
 
+type CalculatableField
+    = BaseField Int
+    | RaceField Int
+    | ClassField Int
+    | BonusField Int
+    | EquipmentField Int
+    | WeaponsField Int
+    | SpecialsField Int
+    | StatisticsField Int
+
+
 type alias ValueModel a =
     { a | key : String, value : Int }
 
 
 type alias CharacterStatisticModel =
-    Nameble (Calculatable {})
+    Namable (Calculatable {})
 
 
 type alias CharacterFeatModel =
-    Nameble
+    Namable
+        (Calculatable
+            { factor : Float
+            , prefix : String
+            , unit : String
+            }
+        )
+
+
+type alias CharacterSkillModel =
+    Namable
         (Calculatable
             (Buyable
-                { factor : Float
-                , prefix : String
-                , unit : String
+                { statistic : String
                 }
             )
         )
@@ -101,27 +150,32 @@ type alias CharacterResistanceModel =
     }
 
 
-type alias FeatModel =
-    ValueModel {}
-
-
-type alias StatisticModel =
-    ValueModel {}
-
-
-type alias WeaponModel =
-    ValueModel {}
-
-
-type alias EquipmentModel =
-    ValueModel {}
+type alias CharacterEquipmentModel =
+    { name : String
+    , location : String
+    , description : String
+    , statistics :
+        { str : Int
+        , agi : Int
+        , inu : Int
+        , per : Int
+        }
+    , feats : Dict String Int
+    }
 
 
 type alias ApplicationStateModel =
     { dialogState : DialogState
     , dialogSize : DialogSize
     , dialogHeader : String
-    , content : CharacterModel -> Html.Html Actions
+    , dialogContent : ApplicationStateDialogData -> CharacterModel -> Html.Html Actions
+    , dialogApplicationPart : ApplicationPart
+    , dialogData : ApplicationStateDialogData
+    }
+
+
+type alias ApplicationStateDialogData =
+    { feats : List CharacterFeatModel
     }
 
 
@@ -133,8 +187,8 @@ type BoughtFrom
 
 
 type DialogState
-    = Show
-    | Hide
+    = DialogShown
+    | DialogHidden
 
 
 type DialogSize
@@ -145,10 +199,14 @@ type DialogSize
 
 defaultApplicationState : ApplicationStateModel
 defaultApplicationState =
-    { dialogState = Hide
+    { dialogState = DialogHidden
     , dialogSize = Medium
     , dialogHeader = "Dialog"
-    , content = \c -> (div [] [])
+    , dialogContent = \a c -> (div [] [])
+    , dialogApplicationPart = ApplicationPartNone
+    , dialogData =
+        { feats = []
+        }
     }
 
 
@@ -188,9 +246,9 @@ defaultCharacter =
         , defaultCharacterFeat "Unbreakable" "20% chance per recuperate to regain all of your lost armor" 20 "" "%"
         , defaultCharacterFeat "Movement" "Increase movement rate with 4ft per rank." 4 "" "ft"
         , defaultCharacterFeat "Hit Points" "Increase HP rank rating by 1" 1 "" ""
-        , defaultCharacterFeat "Merchant" "+3 per rank on your merchant rolls" 3 "" "+"
-        , defaultCharacterFeat "Artist" "+3 per rank on your artist rolls" 3 "" "+"
-        , defaultCharacterFeat "Scholar" "+3 per rank on your scholar rolls" 3 "" "+"
+        , defaultCharacterFeat "Merchant" "+3 per rank on your merchant rolls" 3 "+" ""
+        , defaultCharacterFeat "Artist" "+3 per rank on your artist rolls" 3 "+" ""
+        , defaultCharacterFeat "Scholar" "+3 per rank on your scholar rolls" 3 "+" ""
         ]
     , professions =
         [ CharacterProfessionModel defaultSourceModel defaultSourceModel "Craftsman"
@@ -209,13 +267,53 @@ defaultCharacter =
         , defaultCharacterStatistic "INU"
         , defaultCharacterStatistic "PER"
         ]
+    , skills =
+        [ defaultCharacterSkill "Acrobatics" "AGI"
+        , defaultCharacterSkill "Animal Handler" "PER"
+        , defaultCharacterSkill "Arcane Lore" "INU"
+        , defaultCharacterSkill "Concoct Poison" "AGI"
+        , defaultCharacterSkill "History" "INU"
+        , defaultCharacterSkill "Law" "INU"
+        , defaultCharacterSkill "Math & Science" "INU"
+        , defaultCharacterSkill "Medicine" "PER"
+        , defaultCharacterSkill "Stealth" "AGI"
+        , defaultCharacterSkill "Investigate" "INU"
+        , defaultCharacterSkill "Interrogate" "PER"
+        , defaultCharacterSkill "Persuasion" "PER"
+        , defaultCharacterSkill "Actor" "INU"
+        , defaultCharacterSkill "Wild. Survival" "STR"
+        , defaultCharacterSkill "Rope Use" "STR"
+        , defaultCharacterSkill "Armorer" "STR"
+        , defaultCharacterSkill "Dodge" "AGI"
+        , defaultCharacterSkill "Weapon Skill" "STR"
+        , defaultCharacterSkill "Ballistic Skill" "AGI"
+        , defaultCharacterSkill "Magic" "INU"
+        ]
+    , equipment =
+        [ { name = "nothing"
+          , location = "shoulders"
+          , description = "the shoulder description"
+          , statistics =
+                { str = 0
+                , agi = 0
+                , inu = 0
+                , per = 0
+                }
+          , feats = featDict
+          }
+        ]
     }
+
+
+featDict : Dict String Int
+featDict =
+    Dict.fromList [ ( "Crit", 0 ) ]
 
 
 defaultClassModel : ClassModel
 defaultClassModel =
     { name = "unknown"
-    , feats = []
+    , feats = Dict.fromList []
     }
 
 
@@ -232,6 +330,7 @@ defaultCharacterStatistic name =
     , notes = ""
     , total = 0.0
     , base = 0
+    , xp = 0
     , race = 0
     , class = 0
     , bonus = 0
@@ -250,6 +349,7 @@ defaultCharacterFeat name description factor prefix unit =
     , notes = ""
     , total = 0.0
     , base = 0
+    , xp = 0
     , race = 0
     , class = 0
     , bonus = 0
@@ -260,16 +360,26 @@ defaultCharacterFeat name description factor prefix unit =
     , factor = factor
     , prefix = prefix
     , unit = unit
-    , bought = defaultSourceModel
-    , expertise = defaultSourceModel
     }
 
 
-defaultBuyable =
-    [ { source = None
-      , key = ""
-      }
-    , { source = None
-      , key = ""
-      }
-    ]
+defaultCharacterSkill : String -> String -> CharacterSkillModel
+defaultCharacterSkill name statistic =
+    { name = name
+    , title = ""
+    , description = ""
+    , notes = ""
+    , total = 0.0
+    , base = 0
+    , xp = 0
+    , race = 0
+    , class = 0
+    , bonus = 0
+    , equipment = 0
+    , weapons = 0
+    , specials = 0
+    , statistics = 0
+    , bought = defaultSourceModel
+    , expertise = defaultSourceModel
+    , statistic = statistic
+    }

@@ -2,6 +2,7 @@ module Handlers exposing (..)
 
 import Components
 import Models
+import Dict exposing (Dict)
 
 
 init : ( Models.PageModel, Cmd Models.Actions )
@@ -10,40 +11,166 @@ init =
 
 
 update : Models.Actions -> Models.PageModel -> ( Models.PageModel, Cmd Models.Actions )
-update msg model =
-    case msg of
-        Models.ShowDialog ->
-            let
-                newDialogState : Models.DialogState
-                newDialogState =
-                    case model.appState.dialogState of
-                        Models.Show ->
-                            Models.Hide
+update action pageModel =
+    case action of
+        Models.CharacterMiscActions miscAction ->
+            updateMiscActions miscAction pageModel
 
-                        Models.Hide ->
-                            Models.Show
+        Models.CharacterFeatActions featAction ->
+            updateFeatActions featAction pageModel
+
+        Models.EditFeats ->
+            let
+                oldAppState =
+                    pageModel.appState
+
+                oldDialogData =
+                    pageModel.appState.dialogData
+
+                newDialogData =
+                    { oldDialogData | feats = (List.map identity pageModel.character.feats) }
 
                 newAppState =
-                    (newDialogState
-                        |> setShowDialog model.appState Models.Medium
-                        |> setDialogHeaderText "Dialog"
-                    )
+                    { oldAppState
+                        | dialogState = Models.DialogShown
+                        , dialogHeader = "Edit you feats"
+                        , dialogContent = Components.editFeatDialogContent
+                        , dialogData = newDialogData
+                        , dialogApplicationPart = Models.ApplicationPartFeats
+                    }
             in
-                generateNewModel newAppState model.character
+                ( { pageModel | appState = newAppState }, Cmd.none )
 
-        Models.EditFeat feat ->
+        Models.DialogDone ->
+            case pageModel.appState.dialogApplicationPart of
+                Models.ApplicationPartFeats ->
+                    let
+                        oldAppState =
+                            pageModel.appState
+
+                        newCharacterFeats =
+                            (List.map identity pageModel.appState.dialogData.feats)
+
+                        oldCharacter =
+                            pageModel.character
+
+                        newCharacter =
+                            calculate { oldCharacter | feats = newCharacterFeats }
+
+                        newAppState =
+                            { oldAppState
+                                | dialogState = Models.DialogHidden
+                                , dialogHeader = "Dialog"
+                                , dialogApplicationPart = Models.ApplicationPartNone
+                            }
+                    in
+                        ( { pageModel | appState = newAppState, character = newCharacter }, Cmd.none )
+
+                _ ->
+                    ( pageModel, Cmd.none )
+
+        Models.BuyFeatWithXP feat s ->
             let
-                newAppState : Models.ApplicationStateModel
+                newValue =
+                    String.toInt s |> Result.toMaybe |> Maybe.withDefault 0
+
+                oldAppState =
+                    pageModel.appState
+
+                oldDialogData =
+                    pageModel.appState.dialogData
+
+                newFeats =
+                    pageModel.appState.dialogData.feats
+                        |> List.map
+                            (\f ->
+                                if f.name == feat.name then
+                                    { f | xp = newValue }
+                                else
+                                    f
+                            )
+
+                newDialogData =
+                    { oldDialogData | feats = newFeats }
+
                 newAppState =
-                    Models.Show
-                        |> setShowDialog model.appState Models.Medium
-                        |> setShowDialogFeatContent feat
-                        |> setDialogHeaderText "Edit feats"
+                    { oldAppState | dialogData = newDialogData }
+
+                newModel =
+                    { pageModel | appState = newAppState }
             in
-                generateNewModel newAppState model.character
+                ( newModel, Cmd.none )
+
+        Models.ChangeName name ->
+            let
+                oldCharacter =
+                    pageModel.character
+
+                newCharacter =
+                    { oldCharacter | name = name }
+            in
+                ( { pageModel | character = newCharacter }, Cmd.none )
 
         _ ->
-            ( model, Cmd.none )
+            ( pageModel, Cmd.none )
+
+
+updateMiscActions : Models.MiscActions -> Models.PageModel -> ( Models.PageModel, Cmd Models.Actions )
+updateMiscActions miscAction pageModel =
+    case miscAction of
+        Models.CloseDialog ->
+            let
+                oldAppState =
+                    pageModel.appState
+
+                newAppState =
+                    { oldAppState | dialogState = Models.DialogHidden }
+            in
+                ( { pageModel | appState = newAppState }, Cmd.none )
+
+        _ ->
+            ( pageModel, Cmd.none )
+
+
+updateFeatActions : Models.FeatActions -> Models.PageModel -> ( Models.PageModel, Cmd Models.Actions )
+updateFeatActions featActionsModel pageModel =
+    case featActionsModel of
+        Models.BuyFeat selectedFeat calculatableField ->
+            let
+                character =
+                    pageModel.character
+
+                feats =
+                    character.feats
+                        |> List.map
+                            (\f ->
+                                if f.name == selectedFeat.name then
+                                    case calculatableField of
+                                        Models.BaseField i ->
+                                            { f | base = i }
+
+                                        Models.RaceField i ->
+                                            { f | race = i }
+
+                                        Models.ClassField i ->
+                                            { f | class = i }
+
+                                        Models.BonusField i ->
+                                            { f | bonus = i }
+
+                                        _ ->
+                                            f
+                                else
+                                    f
+                            )
+
+                newCharacter =
+                    calculate { character | feats = feats }
+            in
+                ( { pageModel | character = newCharacter }, Cmd.none )
+
+        _ ->
+            ( pageModel, Cmd.none )
 
 
 generateNewModel : Models.ApplicationStateModel -> Models.CharacterModel -> ( Models.PageModel, Cmd Models.Actions )
@@ -69,7 +196,7 @@ setDialogHeaderText text appState =
 
 setShowDialogFeatContent : Models.CharacterFeatModel -> Models.ApplicationStateModel -> Models.ApplicationStateModel
 setShowDialogFeatContent feat appState =
-    { appState | content = Components.renderFeat feat False }
+    { appState | dialogContent = Components.editFeatDialogContent }
 
 
 setNewState : Models.PageModel -> Models.ApplicationStateModel -> Models.PageModel
@@ -85,24 +212,31 @@ calculate : Models.CharacterModel -> Models.CharacterModel
 calculate character =
     let
         newFeats =
-            (character.feats |> List.map (\feat -> calculateFeat feat))
+            List.map (\feat -> (calculateFeat feat character)) character.feats
     in
         { character | feats = newFeats }
 
 
-calculateFeat : Models.CharacterFeatModel -> Models.CharacterFeatModel
-calculateFeat feat =
+
+{- Calcualte the character -}
+
+
+calculateFeat : Models.CharacterFeatModel -> Models.CharacterModel -> Models.CharacterFeatModel
+calculateFeat feat character =
     let
         race =
-            if feat.race > 0 then
-                feat.race
-            else
-                1
+            feat.race
+
+        equipment =
+            character.equipment
+                |> List.map (\eq -> Dict.get feat.name eq.feats)
+                |> List.map (\eq -> (Maybe.withDefault 0 eq))
+                |> List.foldl (+) 0
 
         newTotal =
-            feat.base + race + feat.class + feat.bonus + feat.equipment + feat.weapons + feat.specials + feat.statistics
+            feat.base + race + feat.xp + feat.class + feat.bonus + equipment + feat.weapons + feat.specials + feat.statistics
 
         total =
             (toFloat newTotal) * feat.factor
     in
-        { feat | total = total }
+        { feat | total = total, equipment = equipment, race = race }
